@@ -1,7 +1,7 @@
-#include "dac81404.h"
+#include "DAC81408.h"
 
 // constructor 
-DAC81404::DAC81404(int cspin, int rstpin, int ldacpin, SPIClass *spi, uint32_t spi_clock_hz) {
+DAC81408::DAC81408(int cspin, int rstpin, int ldacpin, SPIClass *spi, uint32_t spi_clock_hz) {
     _cs_pin = cspin;
     _spi = spi;
 
@@ -19,15 +19,15 @@ DAC81404::DAC81404(int cspin, int rstpin, int ldacpin, SPIClass *spi, uint32_t s
     _spi->begin();
 }
 
-inline void DAC81404::cs_on() { 
+inline void DAC81408::cs_on() { 
     digitalWrite(_cs_pin, LOW); 
 }
 
-inline void DAC81404::cs_off() { 
+inline void DAC81408::cs_off() { 
     digitalWrite(_cs_pin, HIGH); 
 }
 
-int DAC81404::init() {
+int DAC81408::init() {
     // reset if the reset pin is defined
     // TODO: if not then issue a soft reset?
     if(_rst_pin!=-1) {
@@ -47,7 +47,7 @@ int DAC81404::init() {
 
 }
 
-void DAC81404::write_reg(uint8_t reg, uint16_t wdata) {
+void DAC81408::write_reg(uint8_t reg, uint16_t wdata) {
     uint8_t lsb = ((uint16_t)wdata >> 0) & 0xFF;
     uint8_t msb = ((uint16_t)wdata >> 8) & 0xFF;
 
@@ -62,7 +62,7 @@ void DAC81404::write_reg(uint8_t reg, uint16_t wdata) {
     _spi->endTransaction();
 }
 
-uint16_t DAC81404::read_reg(uint8_t reg) {
+uint16_t DAC81408::read_reg(uint8_t reg) {
     uint8_t buf[3]; // 15-0
 
     _spi->beginTransaction(_spi_settings);
@@ -88,7 +88,7 @@ uint16_t DAC81404::read_reg(uint8_t reg) {
 }
 
 //******* Enable/Disable (Power up/down) a channel *******//
-void DAC81404::set_ch_enabled(int ch, bool state) { // true/false = power ON/OFF
+void DAC81408::set_ch_enabled(int ch, bool state) { // true/false = power ON/OFF
     uint16_t res = read_reg(R_DACPWDWN);
     
     // if state==true, power up the channel
@@ -98,19 +98,27 @@ void DAC81404::set_ch_enabled(int ch, bool state) { // true/false = power ON/OFF
     //Serial.print("dacpwdn = "); Serial.println(res, HEX);
 }
 
-bool DAC81404::get_ch_enabled(int ch) {
+bool DAC81408::get_ch_enabled(int ch) {
     uint16_t res = read_reg(R_DACPWDWN);
     return !(bool(((res >> ch) & 1)));
 }
 
 //************** Set/Get internal reference **************//
-void DAC81404::set_int_reference(bool state) {
-    if(state) write_reg(R_GENCONFIG, (0 << 14) ); // Turn on
-    else write_reg(R_GENCONFIG, (1 << 14) ); // Shutdown
+// Definir constantes para os valores de referência interna
+const uint16_t INT_REF_ON = 0x0000;  // Ligar (0000000000000000)
+const uint16_t INT_REF_OFF = 0x4000; // Desligar (0100000000000000)
+
+void DAC81408::set_int_reference(bool state) {
+    if (state) {
+        write_reg(R_GENCONFIG, INT_REF_ON); // Ligar
+    } else {
+        write_reg(R_GENCONFIG, INT_REF_OFF); // Desligar
+    }
 }
 
+
 // 0 => ref off, 1 => ref on, -1 => invalid
-int DAC81404::get_int_reference() {
+int DAC81408::get_int_reference() {
     int out = -1;
     uint16_t res = read_reg(R_GENCONFIG);
     if(res == 0x4000) out = 0;
@@ -119,7 +127,7 @@ int DAC81404::get_int_reference() {
 }
 
 //**************** Set Range of a channel ***************//
-void DAC81404::set_range(int ch, ChannelRange range) {
+void DAC81408::set_range(int ch, ChannelRange range) {
     uint16_t mask = (0xffff >> (16-4)) << 4*ch;
     uint16_t write = (dacrange_reg & ~mask) | (( range << 4*ch )&mask);
     dacrange_reg = write;
@@ -128,18 +136,18 @@ void DAC81404::set_range(int ch, ChannelRange range) {
     write_reg(R_DACRANGE, write );
 }
 
-int DAC81404::get_range(int ch) {
+int DAC81408::get_range(int ch) {
     uint8_t val = (dacrange_reg >> 4*ch) & ((1UL << 4)-1);
     return val;
 }
 
 //**************** Write value to a channel ***************//
-void DAC81404::set_out(int ch, uint16_t val) {
+void DAC81408::set_out(int ch, uint16_t val) {
     write_reg(0x10+ch, val);
 }
 
 //************* Set/get sync mode of a channel ************//
-void DAC81404::set_sync(int ch, SyncMode mode) {
+void DAC81408::set_sync(int ch, SyncMode mode) {
     uint16_t read = read_reg(R_SYNCCONFIG);
     //Serial.print("sync read -> "); Serial.println(read, HEX);
     if(mode==SYNC_LDAC) read |= 1UL << ch;
