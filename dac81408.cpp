@@ -90,10 +90,11 @@ uint16_t DAC81408::read_reg(uint8_t reg) {
 //******* Enable/Disable (Power up/down) a channel *******//
 void DAC81408::set_ch_enabled(int ch, bool state) { // true/false = power ON/OFF
     uint16_t res = read_reg(R_DACPWDWN);
-    
+    uint16_t mask = 1 << (3 + ch);
+
     // if state==true, power up the channel
-    if(state) write_reg(R_DACPWDWN, res &= ~(1 << ch) );
-    else write_reg(R_DACPWDWN, res |= (1 << ch) );
+    if(state) write_reg(R_DACPWDWN, res &= ~mask);
+    else write_reg(R_DACPWDWN, res |= mask);
 
     //Serial.print("dacpwdn = "); Serial.println(res, HEX);
 }
