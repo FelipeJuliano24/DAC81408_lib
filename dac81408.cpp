@@ -1,4 +1,4 @@
-#include "DAC81408.h"
+#include "dac81408.h"
 
 // constructor 
 DAC81408::DAC81408(int cspin, int rstpin, int ldacpin, SPIClass *spi, uint32_t spi_clock_hz) {
@@ -137,14 +137,26 @@ void DAC81408::set_range(int ch, ChannelRange range) {
     write_reg(R_DACRANGE, write );
 }
 
+
 int DAC81408::get_range(int ch) {
     uint8_t val = (dacrange_reg >> 4*ch) & ((1UL << 4)-1);
     return val;
 }
 
-//**************** Write value to a channel ***************//
+//**************** Setar um valor de saida no canal ***************//
 void DAC81408::set_out(int ch, uint16_t val) {
-    write_reg(0x10+ch, val);
+    if (ch < 1 || ch > 8) {
+        // Handle the error (e.g., return or throw an exception)
+        return;
+    }
+    uint8_t address = 0x14 + (ch - 1);
+    write_reg(address, val);
+    
+}
+
+uint8_t DAC81408::get_out(uint8_t reg) {
+    uint16_t val = read_reg(reg);
+    return val;
 }
 
 //************* Set/get sync mode of a channel ************//
