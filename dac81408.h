@@ -13,13 +13,18 @@
 #define R_BRDCONFIG  0x05
 #define R_SYNCCONFIG 0x06
 #define R_DACPWDWN   0x09
-#define R_DACRANGE   0x0A
+#define R_DACRANGE   0x0B
 #define R_TRIGGER    0x0E
 #define R_BRDCAST    0x0F
-#define R_DACA       0x10
-#define R_DACB       0x11
-#define R_DACC       0x12
-#define R_DACD       0x13
+#define R_DACA       0x14
+#define R_DACB       0x15
+#define R_DACC       0x16
+#define R_DACD       0x17
+#define R_DACE       0x18
+#define R_DACF       0x19
+#define R_DACG       0x1A
+#define R_DACH       0x1B
+
 
 // SPICONFIG masks
 #define TEMPALM_EN(x) (x << 11)
@@ -56,7 +61,7 @@ private:
 
 public:
     enum ChannelRange {U_5  = 0b0000, U_10 = 0b0001, U_20 = 0b0010, U_40 = 0b0100,
-                       B_5  = 0b1001, B_10 = 0b1010, B_20 = 0b1100, B_25 = 0b1110};
+                       B_5  = 0b1001, B_10 = 0b1010, B_20 = 0b1100, B_2V5 = 0b1110};
 
     enum SyncMode {SYNC_SS = 0, SYNC_LDAC};
 
@@ -74,8 +79,13 @@ public:
     int get_range(int ch);
 
     void set_out(int ch, uint16_t val);
+    uint8_t get_out(uint8_t reg);
+
     void set_sync(int ch, SyncMode mode);
 };
+
+#endif // DAC81408_H
+
 
 #endif // DAC81408_H
 
